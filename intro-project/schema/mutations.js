@@ -21,7 +21,7 @@ const mutation = new GraphQLObjectType({
         password: { type: new GraphQLNonNull(GraphQLString) },
       },
       resolve(parentValue, { name, email, password }) {
-        return new User({ name, email,password }).save();
+        return new User({ name, email, password }).save();
       }
     },
     newPost: {
@@ -35,13 +35,18 @@ const mutation = new GraphQLObjectType({
         author: { type: new GraphQLNonNull(GraphQLID) },
       },
       resolve(parentValue, { title, body, date, author }) {
+        let thePost;
         return new Post({ title, body, date, author })
           .save()
-          .then(post => User.updateOne(
-            { _id: post.author },
-            { $push: { posts: post } },
-            () => post
-          ))
+          .then(post => {
+            thePost = post;
+            return User.findOneAndUpdate(
+              { _id: post.author },
+              { $push: { posts: post } },
+              { "new": true },
+            )
+          })
+          .then(() => thePost);
       }
     }
   }
