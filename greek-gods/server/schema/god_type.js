@@ -1,6 +1,8 @@
-const mongoose = require('mongoose');
 const graphql = require('graphql');
 const { GraphQLID, GraphQLString, GraphQLObjectType, GraphQLList } = graphql;
+
+const mongoose = require('mongoose');
+const God = mongoose.model('god');
 
 const GodType = new GraphQLObjectType({
   name: 'GodType',
