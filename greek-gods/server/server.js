@@ -22,8 +22,4 @@ app.use(bodyParser.json());
 
 app.use('/graphql', expressGraphQL({ schema, graphiql: true }));
 
-const port = process.env.PORT || 5000;
-
-app.listen(port, () => {
-  `Server is listening on Port ${port}`;
-});
+module.exports = app;

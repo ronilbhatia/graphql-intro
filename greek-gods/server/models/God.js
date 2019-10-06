@@ -72,4 +72,37 @@ GodSchema.statics.addRelative = function (godId, relativeId, relationship) {
     })
 }
 
+GodSchema.statics.removeRelative = function (godId, relativeId, relationship) {
+  return this.find({ _id: { $in: [godId, relativeId] } })
+    .then(gods => {
+      const god = godId === gods[0].id ? gods[0] : gods[1];
+      const relative = relativeId === gods[0].id ? gods[0] : gods[1];
+
+      let godSpliceIdx, relativeSpliceIdx;
+      switch (relationship) {
+        case 'parent':
+          godSpliceIdx = god.parents.indexOf(relative.id);
+          relativeSpliceIdx = relative.children.indexOf(god.id);
+          if (godSpliceIdx !== -1) god.parents.splice(godSpliceIdx, 1);
+          if (relativeSpliceIdx !== -1) relative.children.splice(relativeSpliceIdx, 1);
+          break;
+        case 'child':
+          godSpliceIdx = god.children.indexOf(relative.id);
+          relativeSpliceIdx = relative.parents.indexOf(god.id);
+          if (godSpliceIdx !== -1) god.children.splice(godSpliceIdx, 1);
+          if (relativeSpliceIdx !== -1) relative.parents.splice(relativeSpliceIdx, 1);
+          break;
+        case 'sibling':
+          godSpliceIdx = god.siblings.indexOf(relative.id);
+          relativeSpliceIdx = relative.siblings.indexOf(god.id);
+          if (godSpliceIdx !== -1) god.siblings.splice(godSpliceIdx, 1);
+          if (relativeSpliceIdx !== -1) relative.siblings.splice(relativeSpliceIdx, 1);
+          break;
+      }
+
+      return Promise.all([god.save(), relative.save()])
+        .then(([god, relative]) => god)
+    })
+}
+
 module.exports = mongoose.model("god", GodSchema);

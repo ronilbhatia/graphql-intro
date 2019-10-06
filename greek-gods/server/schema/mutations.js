@@ -3,7 +3,12 @@ const { GraphQLObjectType, GraphQLString, GraphQLID, GraphQLNonNull } = graphql;
 
 const mongoose = require('mongoose');
 const God = mongoose.model('god');
+const Emblem = mongoose.model('emblem');
+const Abode = mongoose.model('abode');
+
 const GodType = require('./god_type');
+const EmblemType = require('./emblem_type');
+const AbodeType = require('./abode_type');
 
 const mutation = new GraphQLObjectType({
   name: 'Mutation',
@@ -55,6 +60,72 @@ const mutation = new GraphQLObjectType({
       },
       resolve(_, { godId, relativeId, relationship }) {
         return God.addRelative(godId, relativeId, relationship);
+      }
+    },
+    removeGodRelative: {
+      type: GodType,
+      args: {
+        godId: { type: GraphQLID },
+        relativeId: { type: GraphQLID },
+        relationship: { type: GraphQLString }
+      },
+      resolve(_, { godId, relativeId, relationship }) {
+        return God.removeRelative(godId, relativeId, relationship);
+      }
+    },
+    addGodEmblem: {
+      type: GodType,
+      args: {
+        godId: { type: GraphQLID },
+        emblemId: { type: GraphQLID }
+      },
+      resolve(_, { godId, emblemId }) {
+        const godPromise = God.findById(godId).then(god => {
+          god.emblems.push(emblemId);
+          return god.save();
+        });
+        const emblemPromise = Emblem.findById(emblemId).then(emblem => {
+          emblem.gods.push(godId);
+          return emblem.save()
+        });
+
+        return Promise.all([godPromise, emblemPromise])
+          .then(([god, emblem]) => god)
+      }
+    },
+    removeGodEmblem: {
+      type: GodType,
+      args: {
+        godId: { type: GraphQLID },
+        emblemId: { type: GraphQLID }
+      },
+      resolve(_, { godId, emblemId }) {
+        const godPromise = God.findById(godId).then(god => {
+          god.emblems.pull(emblemId);
+          return god.save();
+        });
+
+        const emblemPromise = Emblem.findById(emblemId).then(emblem => {
+          emblem.gods.pull(godId)
+          return emblem.save();
+        });
+
+        return Promise.all([godPromise, emblemPromise])
+          .then(([god, emblem]) => god)
+      }
+    },
+    updateGodAbode: {
+      type: GodType,
+      args: {
+        godId: { type: GraphQLID },
+        abodeId: { type: GraphQLID }
+      },
+      resolve(_, { godId, abodeId }) {
+        return God.findOneAndUpdate(
+          { _id: godId },
+          { $set: { abode: abodeId } },
+          { new: true }
+        )
       }
     }
   }
